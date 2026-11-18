@@ -7,6 +7,7 @@ import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -15,8 +16,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -190,9 +189,16 @@ fun NaSXHome(
     var loading by remember { mutableStateOf(true) }
     var selectedTab by remember { mutableStateOf("Home") }
     var savedToList by remember { mutableStateOf(false) }
-    var showAllApps by remember { mutableStateOf(false) }
 
-    val homeFocusRequester = remember { FocusRequester() }
+    val watchlist = remember { mutableStateListOf<Movie>() }
+
+    val tabs = listOf(
+        "Home", "Movies", "Series", "Apps", "Library", "Settings"
+    )
+
+    BackHandler(enabled = selectedTab != "Home") {
+        selectedTab = "Home"
+    }
 
     LaunchedEffect(Unit) {
         loading = true
@@ -200,11 +206,6 @@ fun NaSXHome(
             discoverInstalledApps(context.packageManager)
         }
         loading = false
-    }
-
-    // Give the TV remote an initial focus target.
-    LaunchedEffect(Unit) {
-        homeFocusRequester.requestFocus()
     }
 
     val installedServices = streamingServices.mapNotNull { service ->
@@ -229,12 +230,12 @@ fun NaSXHome(
                 .padding(horizontal = 30.dp, vertical = 12.dp)
         ) {
 
-            // TOP NAVIGATION
+            // HEADER AND NAVIGATION
 
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(54.dp),
+                    .height(58.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -255,7 +256,7 @@ fun NaSXHome(
                 Spacer(Modifier.width(12.dp))
 
                 Text(
-                    "│ CINEMA OS 2.0",
+                    "│ CINEMA OS 2.1",
                     color = Color.Gray,
                     fontSize = 10.sp
                 )
@@ -266,295 +267,98 @@ fun NaSXHome(
                     modifier = Modifier.horizontalScroll(rememberScrollState()),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    listOf("Home", "Movies", "Series", "Apps", "Library", "Settings")
-                        .forEach { tab ->
+                    tabs.forEach { tab ->
+                        val selected = selectedTab == tab
 
-                            val selected = selectedTab == tab
-                            val isHome = tab == "Home"
-
-                            var focused by remember { mutableStateOf(false) }
-
-                            Box(
-                                modifier = Modifier
-                                    .padding(horizontal = 3.dp)
-                                    .then(
-                                        if (isHome) Modifier.focusRequester(homeFocusRequester)
-                                        else Modifier
-                                    )
-                                    .onFocusChanged { focused = it.isFocused }
-                                    .clip(RoundedCornerShape(22.dp))
-                                    .background(
-                                        if (selected) Color(0xFF47151D)
-                                        else Color.Transparent
-                                    )
-                                    .border(
-                                        if (focused) 2.dp else if (selected) 1.dp else 0.dp,
-                                        if (focused) Color(0xFFFFD166)
-                                        else if (selected) Color(0xFFE52A40)
-                                        else Color.Transparent,
-                                        RoundedCornerShape(22.dp)
-                                    )
-                                    .clickable { selectedTab = tab }
-                                    .focusable()
-                                    .padding(horizontal = 12.dp, vertical = 9.dp)
-                            ) {
-                                Text(
-                                    tab,
-                                    color = if (selected || focused) Color.White else Color.LightGray,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            }
-                        }
-                }
-
-                Spacer(Modifier.width(14.dp))
-
-                Text(
-                    "◉  01:30 AM",
-                    color = Color.White,
-                    fontSize = 10.sp
-                )
-            }
-
-            Spacer(Modifier.height(12.dp))
-
-            // HERO BANNER
-
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(275.dp)
-                    .clip(RoundedCornerShape(12.dp))
-            ) {
-                Image(
-                    painter = painterResource(R.drawable.nasx_dune_hero),
-                    contentDescription = "NaSX Dune cinematic hero artwork",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            Brush.horizontalGradient(
-                                0.0f to Color(0xFF08090D),
-                                0.38f to Color(0xCC08090D),
-                                0.68f to Color(0x3308090D),
-                                1.0f to Color.Transparent
-                            )
+                        FocusTab(
+                            title = tab,
+                            selected = selected,
+                            onClick = { selectedTab = tab }
                         )
-                )
-
-                Column(
-                    modifier = Modifier
-                        .align(Alignment.CenterStart)
-                        .padding(start = 30.dp, end = 20.dp)
-                ) {
-                    Text(
-                        "NaSX ORIGINAL",
-                        color = Color(0xFFE52A40),
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    Spacer(Modifier.height(12.dp))
-
-                    Text(
-                        "D U N E",
-                        color = Color.White,
-                        fontSize = 37.sp,
-                        fontWeight = FontWeight.Light
-                    )
-
-                    Text(
-                        "P A R T   T W O",
-                        color = Color.White,
-                        fontSize = 13.sp,
-                        letterSpacing = 5.sp
-                    )
-
-                    Spacer(Modifier.height(14.dp))
-
-                    Text(
-                        "4K UHD  •  DOLBY VISION  •  DOLBY ATMOS",
-                        color = Color(0xFFE7D3B4),
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    Spacer(Modifier.height(12.dp))
-
-                    Text(
-                        "Paul Atreides unites with the Fremen to seek revenge against those who destroyed his family.",
-                        color = Color.LightGray,
-                        fontSize = 12.sp,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-
-                    Spacer(Modifier.height(17.dp))
-
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        var watchFocused by remember { mutableStateOf(false) }
-
-                        Box(
-                            modifier = Modifier
-                                .onFocusChanged { watchFocused = it.isFocused }
-                                .clip(RoundedCornerShape(9.dp))
-                                .background(Color(0xFFE51B35))
-                                .border(
-                                    if (watchFocused) 2.dp else 0.dp,
-                                    Color(0xFFFFD166),
-                                    RoundedCornerShape(9.dp)
-                                )
-                                .clickable {
-                                    Toast.makeText(
-                                        context,
-                                        "Featured movie demo",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }
-                                .focusable()
-                                .padding(horizontal = 19.dp, vertical = 11.dp)
-                        ) {
-                            Text(
-                                "▶  Watch Now",
-                                color = Color.White,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-
-                        var listFocused by remember { mutableStateOf(false) }
-
-                        Box(
-                            modifier = Modifier
-                                .onFocusChanged { listFocused = it.isFocused }
-                                .clip(RoundedCornerShape(9.dp))
-                                .background(Color(0x66333333))
-                                .border(
-                                    if (listFocused) 2.dp else 1.dp,
-                                    if (listFocused) Color(0xFFFFD166) else Color(0xFF777777),
-                                    RoundedCornerShape(9.dp)
-                                )
-                                .clickable { savedToList = !savedToList }
-                                .focusable()
-                                .padding(horizontal = 17.dp, vertical = 11.dp)
-                        ) {
-                            Text(
-                                if (savedToList) "✓ My List" else "+ My List",
-                                color = Color.White,
-                                fontSize = 12.sp
-                            )
-                        }
                     }
                 }
-
-                Text(
-                    "IMAX ENHANCED",
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(18.dp),
-                    color = Color(0xFFE8D1AA),
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-
-            Spacer(Modifier.height(17.dp))
-
-            // STREAMING APPS
-
-            SectionTitle("Streaming Apps")
-
-            Spacer(Modifier.height(9.dp))
-
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(9.dp),
-                contentPadding = PaddingValues(horizontal = 2.dp, vertical = 5.dp)
-            ) {
-                items(installedServices) { pair ->
-                    val service = pair.first
-                    val app = pair.second
-
-                    ServiceCard(
-                        name = service.name,
-                        label = service.shortName,
-                        color = service.color,
-                        installed = true,
-                        onClick = { onLaunchApp(app) }
-                    )
-                }
-
-                items(promotionalServices) { service ->
-                    ServiceCard(
-                        name = service.name,
-                        label = service.shortName,
-                        color = service.color,
-                        installed = false,
-                        onClick = {
-                            Toast.makeText(
-                                context,
-                                "${service.name} is not installed",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    )
-                }
-
-                item {
-                    ServiceCard(
-                        name = "All Apps",
-                        label = "▦",
-                        color = Color(0xFF292B33),
-                        installed = true,
-                        onClick = { showAllApps = !showAllApps }
-                    )
-                }
-            }
-
-            if (showAllApps) {
-                Spacer(Modifier.height(8.dp))
-
-                Text(
-                    if (loading) "Loading apps..."
-                    else "Installed apps: " + apps.joinToString("  •  ") { it.name },
-                    color = Color.LightGray,
-                    fontSize = 10.sp,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
             }
 
             Spacer(Modifier.height(15.dp))
 
-            // TRENDING MOVIES
+            // SCREEN CONTENT
 
-            SectionTitle("Trending Movies")
+            when (selectedTab) {
 
-            Spacer(Modifier.height(9.dp))
+                "Home" -> {
+                    HomeScreen(
+                        apps = apps,
+                        loading = loading,
+                        installedServices = installedServices,
+                        promotionalServices = promotionalServices,
+                        savedToList = savedToList,
+                        onSaveList = { saved ->
+                            savedToList = saved
+                            if (saved) {
+                                if (movies[3] !in watchlist) watchlist.add(movies[3])
+                            } else {
+                                watchlist.remove(movies[3])
+                            }
+                        },
+                        onLaunchApp = onLaunchApp
+                    )
+                }
 
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(11.dp),
-                contentPadding = PaddingValues(horizontal = 2.dp, vertical = 7.dp)
-            ) {
-                items(movies) { movie ->
-                    MovieCard(movie)
+                "Movies" -> {
+                    MoviesScreen(
+                        onSaveMovie = { movie ->
+                            if (movie !in watchlist) {
+                                watchlist.add(movie)
+                                Toast.makeText(
+                                    context,
+                                    "${movie.title} added to My List",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            } else {
+                                watchlist.remove(movie)
+                                Toast.makeText(
+                                    context,
+                                    "${movie.title} removed from My List",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        },
+                        watchlist = watchlist
+                    )
+                }
+
+                "Series" -> {
+                    SeriesScreen()
+                }
+
+                "Apps" -> {
+                    AppsScreen(
+                        apps = apps,
+                        loading = loading,
+                        onLaunchApp = onLaunchApp
+                    )
+                }
+
+                "Library" -> {
+                    LibraryScreen(
+                        watchlist = watchlist,
+                        onRemove = { watchlist.remove(it) }
+                    )
+                }
+
+                "Settings" -> {
+                    SettingsScreen()
                 }
             }
 
-            Spacer(Modifier.height(18.dp))
-
-            // FOOTER
+            Spacer(Modifier.height(22.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    "NaSX CINEMA OS 2.0",
+                    "NaSX CINEMA OS 2.1",
                     color = Color(0xFF777B86),
                     fontSize = 9.sp
                 )
@@ -566,20 +370,527 @@ fun NaSXHome(
                     fontSize = 9.sp
                 )
             }
-
-            Spacer(Modifier.height(20.dp))
         }
     }
 }
+
+@Composable
+fun FocusTab(
+    title: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    var focused by remember { mutableStateOf(false) }
+
+    Box(
+        modifier = Modifier
+            .padding(horizontal = 3.dp)
+            .onFocusChanged { focused = it.isFocused }
+            .clip(RoundedCornerShape(22.dp))
+            .background(
+                if (selected) Color(0xFF47151D)
+                else Color.Transparent
+            )
+            .border(
+                if (focused) 2.dp else if (selected) 1.dp else 0.dp,
+                if (focused) Color(0xFFFFD166)
+                else if (selected) Color(0xFFE52A40)
+                else Color.Transparent,
+                RoundedCornerShape(22.dp)
+            )
+            .clickable { onClick() }
+            .focusable()
+            .padding(horizontal = 12.dp, vertical = 9.dp)
+    ) {
+        Text(
+            title,
+            color = if (selected || focused) Color.White else Color.LightGray,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold
+        )
+    }
+}
+
+// HOME SCREEN
+
+@Composable
+fun HomeScreen(
+    apps: List<InstalledApp>,
+    loading: Boolean,
+    installedServices: List<Pair<StreamingService, InstalledApp>>,
+    promotionalServices: List<StreamingService>,
+    savedToList: Boolean,
+    onSaveList: (Boolean) -> Unit,
+    onLaunchApp: (InstalledApp) -> Unit
+) {
+    val context = LocalContext.current
+
+    HeroBanner(
+        savedToList = savedToList,
+        onSaveList = onSaveList
+    )
+
+    Spacer(Modifier.height(20.dp))
+
+    SectionTitle("Streaming Apps")
+
+    Spacer(Modifier.height(10.dp))
+
+    Row(
+        modifier = Modifier.horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        installedServices.forEach { pair ->
+            ServiceCard(
+                name = pair.first.name,
+                label = pair.first.shortName,
+                color = pair.first.color,
+                installed = true,
+                onClick = { onLaunchApp(pair.second) }
+            )
+        }
+
+        promotionalServices.forEach { service ->
+            ServiceCard(
+                name = service.name,
+                label = service.shortName,
+                color = service.color,
+                installed = false,
+                onClick = {
+                    Toast.makeText(
+                        context,
+                        "${service.name} is not installed",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            )
+        }
+
+        ServiceCard(
+            name = "All Apps",
+            label = "▦",
+            color = Color(0xFF292B33),
+            installed = true,
+            onClick = {
+                Toast.makeText(context, "Open Apps tab to view all apps", Toast.LENGTH_SHORT).show()
+            }
+        )
+    }
+
+    Spacer(Modifier.height(20.dp))
+
+    SectionTitle("Trending Movies")
+
+    Spacer(Modifier.height(10.dp))
+
+    MovieRow(movies.take(4))
+
+    Spacer(Modifier.height(18.dp))
+
+    SectionTitle("Discover More")
+
+    Spacer(Modifier.height(8.dp))
+
+    Text(
+        "Explore movies, series and entertainment on NaSX Cinema OS.",
+        color = Color.LightGray,
+        fontSize = 13.sp
+    )
+}
+
+// HERO BANNER
+
+@Composable
+fun HeroBanner(
+    savedToList: Boolean,
+    onSaveList: (Boolean) -> Unit
+) {
+    val context = LocalContext.current
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(275.dp)
+            .clip(RoundedCornerShape(12.dp))
+    ) {
+        Image(
+            painter = painterResource(R.drawable.nasx_dune_hero),
+            contentDescription = "NaSX Dune cinematic hero artwork",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.horizontalGradient(
+                        0.0f to Color(0xFF08090D),
+                        0.38f to Color(0xCC08090D),
+                        0.68f to Color(0x3308090D),
+                        1.0f to Color.Transparent
+                    )
+                )
+        )
+
+        Column(
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .padding(start = 30.dp, end = 20.dp)
+        ) {
+            Text(
+                "NaSX ORIGINAL",
+                color = Color(0xFFE52A40),
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            Text(
+                "D U N E",
+                color = Color.White,
+                fontSize = 37.sp,
+                fontWeight = FontWeight.Light
+            )
+
+            Text(
+                "P A R T   T W O",
+                color = Color.White,
+                fontSize = 13.sp,
+                letterSpacing = 5.sp
+            )
+
+            Spacer(Modifier.height(14.dp))
+
+            Text(
+                "4K UHD  •  DOLBY VISION  •  DOLBY ATMOS",
+                color = Color(0xFFE7D3B4),
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            Text(
+                "Paul Atreides unites with the Fremen to seek revenge against those who destroyed his family.",
+                color = Color.LightGray,
+                fontSize = 12.sp,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            Spacer(Modifier.height(17.dp))
+
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                FocusAction(
+                    text = "▶ Watch Now",
+                    color = Color(0xFFE51B35),
+                    onClick = {
+                        Toast.makeText(context, "Featured movie demo", Toast.LENGTH_SHORT).show()
+                    }
+                )
+
+                FocusAction(
+                    text = if (savedToList) "✓ My List" else "+ My List",
+                    color = Color(0x66333333),
+                    onClick = { onSaveList(!savedToList) }
+                )
+            }
+        }
+
+        Text(
+            "IMAX ENHANCED",
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(18.dp),
+            color = Color(0xFFE8D1AA),
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+// MOVIES DASHBOARD
+
+@Composable
+fun MoviesScreen(
+    onSaveMovie: (Movie) -> Unit,
+    watchlist: List<Movie>
+) {
+    Text(
+        "MOVIES",
+        color = Color.White,
+        fontSize = 27.sp,
+        fontWeight = FontWeight.Black
+    )
+
+    Spacer(Modifier.height(5.dp))
+
+    Text(
+        "Your cinema discovery destination",
+        color = Color.Gray,
+        fontSize = 13.sp
+    )
+
+    Spacer(Modifier.height(20.dp))
+
+    HeroBanner(
+        savedToList = false,
+        onSaveList = {}
+    )
+
+    Spacer(Modifier.height(22.dp))
+
+    SectionTitle("Trending Now")
+
+    Spacer(Modifier.height(10.dp))
+
+    MovieRow(movies.take(4), onSaveMovie, watchlist)
+
+    Spacer(Modifier.height(22.dp))
+
+    SectionTitle("Popular Movies")
+
+    Spacer(Modifier.height(10.dp))
+
+    MovieRow(movies.drop(4), onSaveMovie, watchlist)
+
+    Spacer(Modifier.height(22.dp))
+
+    SectionTitle("Recently Added")
+
+    Spacer(Modifier.height(10.dp))
+
+    MovieRow(
+        listOf(movies[2], movies[3], movies[0], movies[1]),
+        onSaveMovie,
+        watchlist
+    )
+}
+
+// SERIES SCREEN
+
+@Composable
+fun SeriesScreen() {
+    Text(
+        "SERIES",
+        color = Color.White,
+        fontSize = 27.sp,
+        fontWeight = FontWeight.Black
+    )
+
+    Spacer(Modifier.height(6.dp))
+
+    Text(
+        "Discover your next favourite series",
+        color = Color.Gray,
+        fontSize = 13.sp
+    )
+
+    Spacer(Modifier.height(25.dp))
+
+    SectionTitle("Coming Soon")
+
+    Spacer(Modifier.height(14.dp))
+
+    EmptyStateCard(
+        title = "SERIES COLLECTION",
+        description = "Your series discovery experience is under development."
+    )
+}
+
+// APPS SCREEN
+
+@Composable
+fun AppsScreen(
+    apps: List<InstalledApp>,
+    loading: Boolean,
+    onLaunchApp: (InstalledApp) -> Unit
+) {
+    Text(
+        "APPLICATIONS",
+        color = Color.White,
+        fontSize = 27.sp,
+        fontWeight = FontWeight.Black
+    )
+
+    Spacer(Modifier.height(6.dp))
+
+    Text(
+        "Your installed Android TV applications",
+        color = Color.Gray,
+        fontSize = 13.sp
+    )
+
+    Spacer(Modifier.height(20.dp))
+
+    if (loading) {
+        Text("Discovering applications...", color = Color.White)
+    } else if (apps.isEmpty()) {
+        EmptyStateCard(
+            "NO APPLICATIONS FOUND",
+            "Install applications to see them here."
+        )
+    } else {
+        apps.forEach { app ->
+            FocusListItem(
+                title = app.name,
+                subtitle = app.packageName,
+                onClick = { onLaunchApp(app) }
+            )
+            Spacer(Modifier.height(8.dp))
+        }
+    }
+}
+
+// LIBRARY SCREEN
+
+@Composable
+fun LibraryScreen(
+    watchlist: List<Movie>,
+    onRemove: (Movie) -> Unit
+) {
+    Text(
+        "MY LIBRARY",
+        color = Color.White,
+        fontSize = 27.sp,
+        fontWeight = FontWeight.Black
+    )
+
+    Spacer(Modifier.height(6.dp))
+
+    Text(
+        "Your saved movies and favourites",
+        color = Color.Gray,
+        fontSize = 13.sp
+    )
+
+    Spacer(Modifier.height(20.dp))
+
+    SectionTitle("My Watchlist")
+
+    Spacer(Modifier.height(12.dp))
+
+    if (watchlist.isEmpty()) {
+        EmptyStateCard(
+            title = "YOUR LIST IS EMPTY",
+            description = "Save movies from the Movies screen to see them here."
+        )
+    } else {
+        MovieRow(
+            watchlist,
+            onSaveMovie = onRemove,
+            watchlist = watchlist
+        )
+    }
+}
+
+// SETTINGS SCREEN
+
+@Composable
+fun SettingsScreen() {
+    var showClock by remember { mutableStateOf(true) }
+    var cinematicMode by remember { mutableStateOf(true) }
+
+    Text(
+        "SETTINGS",
+        color = Color.White,
+        fontSize = 27.sp,
+        fontWeight = FontWeight.Black
+    )
+
+    Spacer(Modifier.height(6.dp))
+
+    Text(
+        "Personalise your NaSX experience",
+        color = Color.Gray,
+        fontSize = 13.sp
+    )
+
+    Spacer(Modifier.height(22.dp))
+
+    SectionTitle("Display Preferences")
+
+    Spacer(Modifier.height(12.dp))
+
+    SettingToggle(
+        title = "Show Clock",
+        description = "Display the clock in the launcher",
+        checked = showClock,
+        onCheckedChange = { showClock = it }
+    )
+
+    Spacer(Modifier.height(10.dp))
+
+    SettingToggle(
+        title = "Cinematic Mode",
+        description = "Use the cinematic launcher appearance",
+        checked = cinematicMode,
+        onCheckedChange = { cinematicMode = it }
+    )
+
+    Spacer(Modifier.height(22.dp))
+
+    SectionTitle("About")
+
+    Spacer(Modifier.height(10.dp))
+
+    Text(
+        "NaSX Cinema OS 2.1",
+        color = Color.White,
+        fontSize = 15.sp,
+        fontWeight = FontWeight.Bold
+    )
+
+    Text(
+        "Cinema Beyond Reality",
+        color = Color.Gray,
+        fontSize = 12.sp
+    )
+}
+
+// REUSABLE COMPONENTS
 
 @Composable
 fun SectionTitle(title: String) {
     Text(
         text = title,
         color = Color.White,
-        fontSize = 17.sp,
+        fontSize = 18.sp,
         fontWeight = FontWeight.Bold
     )
+}
+
+@Composable
+fun FocusAction(
+    text: String,
+    color: Color,
+    onClick: () -> Unit
+) {
+    var focused by remember { mutableStateOf(false) }
+
+    Box(
+        modifier = Modifier
+            .onFocusChanged { focused = it.isFocused }
+            .clip(RoundedCornerShape(9.dp))
+            .background(color)
+            .border(
+                if (focused) 2.dp else 0.dp,
+                Color(0xFFFFD166),
+                RoundedCornerShape(9.dp)
+            )
+            .clickable { onClick() }
+            .focusable()
+            .padding(horizontal = 17.dp, vertical = 11.dp)
+    ) {
+        Text(
+            text,
+            color = Color.White,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold
+        )
+    }
 }
 
 @Composable
@@ -610,12 +921,9 @@ fun ServiceCard(
             .focusable(),
         contentAlignment = Alignment.Center
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = label,
+                label,
                 color = Color.White,
                 fontSize = if (label.length > 7) 12.sp else 17.sp,
                 fontWeight = FontWeight.Black
@@ -624,7 +932,7 @@ fun ServiceCard(
             Spacer(Modifier.height(3.dp))
 
             Text(
-                text = if (installed) "INSTALLED" else "EXPLORE",
+                if (installed) "INSTALLED" else "EXPLORE",
                 color = if (installed) Color(0xFF79DFA6) else Color.LightGray,
                 fontSize = 7.sp,
                 fontWeight = FontWeight.Bold
@@ -634,7 +942,31 @@ fun ServiceCard(
 }
 
 @Composable
-fun MovieCard(movie: Movie) {
+fun MovieRow(
+    movieList: List<Movie>,
+    onSaveMovie: (Movie) -> Unit = {},
+    watchlist: List<Movie> = emptyList()
+) {
+    Row(
+        modifier = Modifier.horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        movieList.forEach { movie ->
+            MovieCard(
+                movie = movie,
+                saved = movie in watchlist,
+                onClick = { onSaveMovie(movie) }
+            )
+        }
+    }
+}
+
+@Composable
+fun MovieCard(
+    movie: Movie,
+    saved: Boolean = false,
+    onClick: () -> Unit = {}
+) {
     var focused by remember { mutableStateOf(false) }
 
     Box(
@@ -649,15 +981,13 @@ fun MovieCard(movie: Movie) {
                 if (focused) Color(0xFFFFD166) else Color(0xFF46464D),
                 RoundedCornerShape(10.dp)
             )
-            .clickable {
-                // Movie details action can be added later.
-            }
+            .clickable { onClick() }
             .focusable(),
         contentAlignment = Alignment.BottomStart
     ) {
         if (movie.posterResId != null) {
             Image(
-                painter = painterResource(id = movie.posterResId),
+                painter = painterResource(movie.posterResId),
                 contentDescription = "${movie.title} movie poster",
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
@@ -681,19 +1011,28 @@ fun MovieCard(movie: Movie) {
                 .fillMaxWidth()
                 .padding(10.dp)
         ) {
+            if (saved) {
+                Text(
+                    "✓ SAVED",
+                    color = Color(0xFF79DFA6),
+                    fontSize = 8.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
             Text(
-                text = movie.title,
+                movie.title,
                 color = Color.White,
-                fontSize = 14.sp,
+                fontSize = 13.sp,
                 fontWeight = FontWeight.Black,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
 
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(3.dp))
 
             Text(
-                text = movie.subtitle,
+                movie.subtitle,
                 color = Color(0xFFE7B98B),
                 fontSize = 7.sp,
                 fontWeight = FontWeight.Bold,
@@ -701,5 +1040,135 @@ fun MovieCard(movie: Movie) {
                 overflow = TextOverflow.Ellipsis
             )
         }
+    }
+}
+
+@Composable
+fun FocusListItem(
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit
+) {
+    var focused by remember { mutableStateOf(false) }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .onFocusChanged { focused = it.isFocused }
+            .clip(RoundedCornerShape(10.dp))
+            .background(Color(0xFF151821))
+            .border(
+                if (focused) 2.dp else 1.dp,
+                if (focused) Color(0xFFFFD166) else Color(0xFF30343F),
+                RoundedCornerShape(10.dp)
+            )
+            .clickable { onClick() }
+            .focusable()
+            .padding(15.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                title,
+                color = Color.White,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Text(
+                subtitle,
+                color = Color.Gray,
+                fontSize = 10.sp
+            )
+        }
+
+        Text(
+            "OPEN  ›",
+            color = Color(0xFFE7B98B),
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+@Composable
+fun EmptyStateCard(
+    title: String,
+    description: String
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color(0xFF151821))
+            .border(1.dp, Color(0xFF30343F), RoundedCornerShape(12.dp))
+            .padding(28.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                title,
+                color = Color.White,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(Modifier.height(8.dp))
+
+            Text(
+                description,
+                color = Color.Gray,
+                fontSize = 12.sp
+            )
+        }
+    }
+}
+
+@Composable
+fun SettingToggle(
+    title: String,
+    description: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    var focused by remember { mutableStateOf(false) }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .onFocusChanged { focused = it.isFocused }
+            .clip(RoundedCornerShape(10.dp))
+            .background(Color(0xFF151821))
+            .border(
+                if (focused) 2.dp else 1.dp,
+                if (focused) Color(0xFFFFD166) else Color(0xFF30343F),
+                RoundedCornerShape(10.dp)
+            )
+            .clickable { onCheckedChange(!checked) }
+            .focusable()
+            .padding(15.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                title,
+                color = Color.White,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Text(
+                description,
+                color = Color.Gray,
+                fontSize = 10.sp
+            )
+        }
+
+        Text(
+            if (checked) "ON" else "OFF",
+            color = if (checked) Color(0xFF79DFA6) else Color.Gray,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
